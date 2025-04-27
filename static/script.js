@@ -2,7 +2,7 @@
 document.addEventListener("DOMContentLoaded", function() {
   const selectedKeywords = [];
 
-  // Handle keyword button click
+  // Handle keyword button selection
   document.querySelectorAll(".keyword-button").forEach(button => {
     button.addEventListener("click", function() {
       const value = button.value;
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  // Handle submit button click
+  // Handle Generate Blogs button click
   document.getElementById("submit-button").addEventListener("click", function() {
     if (selectedKeywords.length === 0) {
       alert("Please select at least one keyword!");
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function() {
       const blogsContainer = document.getElementById("blogs-container");
       blogsContainer.innerHTML = '';
 
-      if (data.matched_blogs.length === 0) {
+      if (!data.matched_blogs || data.matched_blogs.length === 0) {
         blogsContainer.innerHTML = '<p class="text-center">No blogs found for selected interests.</p>';
         return;
       }
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function() {
               <div class="card-body">
                 <h5 class="card-title">${blog.title}</h5>
                 <p class="card-text">${blog.description}</p>
-                <button class="btn btn-outline-warning save-button" data-blog-id="${blog.blog_id}">
+                <button class="btn btn-outline-warning save-button" data-title="${blog.title}" data-description="${blog.description}">
                   Save to Favorites ⭐
                 </button>
               </div>
@@ -62,18 +62,19 @@ document.addEventListener("DOMContentLoaded", function() {
         blogsContainer.innerHTML += blogCard;
       });
 
-      // After adding blogs, attach event listeners for "Save to Favorites"
+      // After adding blogs, attach Save-to-Favorites button functionality
       setTimeout(() => {
         document.querySelectorAll(".save-button").forEach(button => {
           button.addEventListener("click", function() {
-            const blogId = button.getAttribute('data-blog-id');
+            const title = button.getAttribute('data-title');
+            const description = button.getAttribute('data-description');
 
             fetch('/save_favorite', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ blog_id: blogId })
+              body: JSON.stringify({ title: title, description: description })
             })
             .then(response => response.json())
             .then(data => {

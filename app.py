@@ -3,9 +3,14 @@ import mysql.connector
 import secrets
 from dotenv import load_dotenv
 import os
+from openai import OpenAI
+import json
+
 
 # Load environment variables from .env file
 load_dotenv()
+# Load OpenAI API Key
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 db = mysql.connector.connect(
     host=os.getenv('DB_HOST'),
@@ -103,6 +108,8 @@ def index():
     keywords = get_keywords()
     return render_template('index.html', keywords=keywords)
 
+
+
 @app.route('/generate_blogs', methods=['POST'])
 def generate_blogs():
     if 'user_id' not in session:
@@ -112,27 +119,43 @@ def generate_blogs():
     if not selected_keywords:
         return jsonify({"error": "No keywords selected."})
 
-    matched_blogs = get_blogs_by_keywords(selected_keywords)
-    return jsonify(matched_blogs=matched_blogs)
+    # Prepare prompt for OpenAI
+    prompt_text = f"""
+    Based on the following keywords: {', '.join(selected_keywords)},
+    generate a JSON output with:
+    - A creative blog title
+    - A detailed, engaging blog description
 
-# Route to view favorite blogs
-@app.route('/favorites')
-def favorites():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    query = """
-        SELECT b.title, b.description, b.image_url
-        FROM user_favorites uf
-        JOIN blog b ON uf.blog_id = b.blog_id
-        WHERE uf.user_id = %s
+    Example format:
+    {{
+        "title": "Sample Title",
+        "description": "Sample description text..."
+    }}
     """
-    cursor.execute(query, (user_id,))
-    favorites = cursor.fetchall()
 
-    return render_template('favorites.html', favorites=favorites)
+    try:
+        # Call OpenAI's Chat Completion API
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt_text}],
+            temperature=0.7,
+            max_tokens=500
+        )
+
+        content = response.choices[0].message.content
+
+        # Safely parse JSON from OpenAI response
+        blog_data = json.loads(content)
+
+        return jsonify(matched_blogs=[{
+            "title": blog_data.get('title', 'Untitled Blog'),
+            "description": blog_data.get('description', 'No description available.'),
+            "image_url": "static/images/default.png"  # Default image
+        }])
+
+    except Exception as e:
+        return jsonify({"error": f"OpenAI API error: {str(e)}"})
+
 
 # Route to save a blog to favorites
 @app.route('/save_favorite', methods=['POST'])
@@ -141,17 +164,38 @@ def save_favorite():
         return jsonify({"status": "error", "message": "Not logged in"})
 
     data = request.json
-    blog_id = data.get('blog_id')
+    title = data.get('title')
+    description = data.get('description')
 
     try:
         cursor.execute(
-            "INSERT IGNORE INTO user_favorites (user_id, blog_id) VALUES (%s, %s)",
-            (session['user_id'], blog_id)
+            "INSERT INTO user_favorites (user_id, blog_title, blog_description) VALUES (%s, %s, %s)",
+            (session['user_id'], title, description)
         )
         db.commit()
-        return jsonify({"status": "success", "message": "Blog saved to favorites"})
+        return jsonify({"status": "success", "message": "Blog saved to favorites!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+# route to view favorite blogs
+@app.route('/favorites')
+def favorites():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    query = """
+        SELECT blog_title, blog_description
+        FROM user_favorites
+        WHERE user_id = %s
+    """
+    cursor.execute(query, (user_id,))
+    favorites = cursor.fetchall()
+
+    return render_template('favorites.html', favorites=favorites)
+
+
 
 
 # ----------------------------

@@ -1,8 +1,14 @@
-// script.js
+//// script.js
+// Authors: Heeya Mineshkumar Amin and Shail Jayesh Patel
+
+
 document.addEventListener("DOMContentLoaded", function() {
   const selectedKeywords = [];
 
-  // Handle keyword button selection
+  // --------------------------------------------
+  // Written by Heeya Mineshkumar Amin
+  // Handle keyword button click selection/deselection
+  // --------------------------------------------
   document.querySelectorAll(".keyword-button").forEach(button => {
     button.addEventListener("click", function() {
       const value = button.value;
@@ -19,7 +25,10 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  // Handle Generate Blogs button click
+  // --------------------------------------------
+  // Written by Shail Jayesh Patel
+  // Handle Generate Blogs button click and fetch request
+  // --------------------------------------------
   document.getElementById("submit-button").addEventListener("click", function() {
     if (selectedKeywords.length === 0) {
       alert("Please select at least one keyword!");
@@ -43,7 +52,10 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
       }
 
-      // Display matched blogs
+      // --------------------------------------------
+      // Written by Shail Jayesh Patel
+      // Dynamically generate blog cards
+      // --------------------------------------------
       data.matched_blogs.forEach(blog => {
         const blogCard = `
           <div class="col-md-6 col-lg-4 mb-4">
@@ -52,40 +64,14 @@ document.addEventListener("DOMContentLoaded", function() {
               <div class="card-body">
                 <h5 class="card-title">${blog.title}</h5>
                 <p class="card-text">${blog.description}</p>
-                <button class="btn btn-outline-warning save-button" data-title="${blog.title}" data-description="${blog.description}">
-                  Save to Favorites ⭐
-                </button>
               </div>
             </div>
           </div>
         `;
         blogsContainer.innerHTML += blogCard;
       });
-
-      // After adding blogs, attach Save-to-Favorites button functionality
-      setTimeout(() => {
-        document.querySelectorAll(".save-button").forEach(button => {
-          button.addEventListener("click", function() {
-            const title = button.getAttribute('data-title');
-            const description = button.getAttribute('data-description');
-
-            fetch('/save_favorite', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ title: title, description: description })
-            })
-            .then(response => response.json())
-            .then(data => {
-              alert(data.message);
-            })
-            .catch(error => console.error("Error saving favorite:", error));
-          });
-        });
-      }, 500);
-
     })
     .catch(error => console.error("Error fetching blogs:", error));
   });
+
 });

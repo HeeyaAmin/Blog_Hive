@@ -1,19 +1,23 @@
 /* styles.css - BlogHive styling */
+/* Authors: Heeya Mineshkumar Amin and Shail Jayesh Patel */
 
 body {
   background-color: #f8f9fa;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Written by Heeya Mineshkumar Amin */
 h2, h5 {
   font-family: 'Fredoka', sans-serif;
   color: #343a40;
 }
 
+/* Written by Heeya Mineshkumar Amin */
 .navbar {
   margin-bottom: 20px;
 }
 
+/* Written by Shail Jayesh Patel */
 .keyword-button {
   border-radius: 30px;
   padding: 10px 20px;
@@ -25,11 +29,13 @@ h2, h5 {
   color: white;
 }
 
+/* Written by Shail Jayesh Patel */
 #submit-button {
   margin-top: 20px;
   padding: 10px 30px;
 }
 
+/* Written by Shail Jayesh Patel */
 .card {
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   border-radius: 15px;
@@ -40,15 +46,18 @@ h2, h5 {
   transform: scale(1.03);
 }
 
+/* Written by Shail Jayesh Patel */
 .card-img-top {
   height: 200px;
   object-fit: cover;
 }
 
+/* Written by Heeya Mineshkumar Amin */
 #blogs-container {
   margin-top: 30px;
 }
 
+/* Written by Heeya Mineshkumar Amin */
 .text-center {
   text-align: center;
 }

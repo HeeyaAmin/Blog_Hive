@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const modalTitle = document.getElementById("modal-title");
   let currentKeyword = "";
 
+//Written by: Heeya Mineshkumar Amin
   document.querySelectorAll(".keyword-button").forEach(button => {
   button.addEventListener("click", function () {
     const keyword = button.value;
@@ -79,7 +80,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-
+//Written by: Shail Jayesh Patel
   document.getElementById("confirm-adjectives").addEventListener("click", () => {
   const selected = [];
   adjectiveBox.querySelectorAll("input:checked").forEach(cb => {
@@ -101,11 +102,13 @@ document.addEventListener("DOMContentLoaded", function () {
   document.body.classList.remove("modal-open");
 });
 
+//Written by: Heeya Mineshkumar Patel
   document.getElementById("cancel-adjectives").addEventListener("click", () => {
     modal.classList.add("d-none");
     document.body.classList.remove("modal-open");
   });
 
+//Written by: Shail Jayesh Patel
   document.getElementById("submit-button").addEventListener("click", function () {
     if (Object.keys(selectedKeywords).length === 0) {
       alert("Please select at least one keyword and its adjectives!");

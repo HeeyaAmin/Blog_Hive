@@ -1,7 +1,6 @@
 # app.py
 # Authors: Heeya Mineshkumar Amin and Shail Jayesh Patel
 
-
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
 import secrets

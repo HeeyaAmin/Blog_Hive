@@ -132,17 +132,19 @@ def generate_blogs():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    selected_keywords = request.json.get('selected_keywords', [])
-    if not selected_keywords:
-        return jsonify({"error": "No keywords selected."})
+    data = request.json
+    keyword_adjectives = data.get('keyword_adjectives', {})
 
-    adjectives = fetch_random_adjectives(selected_keywords)
+    if not keyword_adjectives:
+        return jsonify({"error": "No adjectives selected."})
 
-    if not adjectives:
-        return jsonify({"error": "No adjectives found for selected keywords."})
+    # Flatten all selected adjectives into one list
+    selected_adjectives = []
+    for adjective_list in keyword_adjectives.values():
+        selected_adjectives.extend(adjective_list)
 
     prompt_text = f"""
-    Based on the following concepts: {', '.join(adjectives)},
+    Based on the following concepts: {', '.join(selected_adjectives)},
     generate a JSON output with:
     - A creative blog title
     - A detailed, engaging blog description
@@ -165,6 +167,13 @@ def generate_blogs():
         content = response.choices[0].message.content
         blog_data = json.loads(content)
 
+        # Save blog generation to DB
+        cursor.execute(
+            "INSERT INTO blog_generation_log (user_id, generated_title, generated_description, selected_data) VALUES (%s, %s, %s, %s)",
+            (session['user_id'], blog_data.get('title'), blog_data.get('description'), json.dumps(keyword_adjectives))
+        )
+        db.commit()
+
         return jsonify(matched_blogs=[{
             "title": blog_data.get('title', 'Untitled Blog'),
             "description": blog_data.get('description', 'No description available.'),
@@ -173,6 +182,16 @@ def generate_blogs():
 
     except Exception as e:
         return jsonify({"error": f"OpenAI API error: {str(e)}"})
+
+
+# Written by Heeya Mineshkumar Amin
+@app.route('/get_adjectives/<keyword>')
+def get_adjectives(keyword):
+    query = f"SELECT DISTINCT `{keyword}` AS adjective FROM adjectives WHERE `{keyword}` IS NOT NULL"
+    cursor.execute(query)
+    results = cursor.fetchall()
+    return jsonify([row['adjective'] for row in results if row['adjective']])
+
 
 # ----------------------------------------
 # 🚀 Main Entry Point

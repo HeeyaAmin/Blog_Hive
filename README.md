@@ -1,126 +1,154 @@
-# 🐝 BlogHive
 
-**BlogHive** is a web application where users can select their interests and instantly generate blog templates — complete with titles, descriptions, and images — all powered by a fully normalized **MySQL database** and a **Flask backend**.
+# 🐝 BlogHive — AI-Powered Blog Generator
 
----
-
-## 📋 Features
-
-- User Registration & Login
-- Interest (Keyword) Selection
-- Blog Template Matching based on Interests
-- View Matched Blogs Dynamically
-- Clean Frontend with Bootstrap 5
-- Backend Queries use JOINs and Conditions
-- Database Normalized (1NF, 2NF, 3NF)
-- Secure Session Management
-- Easy to Extend with Favorites (optional)
+**BlogHive** is a full-stack Flask-based web app that enables users to generate intelligent, tailored blog titles and descriptions by selecting interest-based keywords and adjectives. Built using Flask, MySQL, and OpenAI GPT models, it delivers a rich user experience with full backend customization, logging, and blog personalization.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Features
 
-- **Backend:** Python (Flask)
-- **Frontend:** HTML5, CSS3, Bootstrap 5, JavaScript
-- **Database:** MySQL
-- **Environment Management:** Python-dotenv
+- User login/signup and session management
+- Keyword selection interface with dynamic adjective dropdowns
+- User can choose multiple adjectives per keyword
+- AI-generated blog title + description using OpenAI GPT-3.5
+- Save blogs to favorites
+- Full logging of blog generation activity (who generated what, when, and using which adjectives)
+- Mobile-responsive frontend (Bootstrap-based)
 
 ---
 
-## 📁 Project Structure
+## 📦 Technologies Used
 
-BlogHive/ │ ├── app.py # Main Flask server ├── templates/ # HTML Pages │ ├── login.html │ ├── signup.html │ ├── index.html ├── static/ # Static files │ ├── script.js │ ├── styles.css │ └── images/ │ ├── travel2025.png │ ├── fitnessboost.png │ └── (more images) ├── .env # Environment Variables (secret keys, database config) ├── requirements.txt # Python dependencies └── README.md # Project documentation
+- **Frontend**: HTML, CSS (Bootstrap), JavaScript
+- **Backend**: Flask (Python), OpenAI API
+- **Database**: MySQL (with full normalization and joins)
+- **AI**: OpenAI GPT-3.5 Turbo (text generation)
 
-yaml
+---
+
+## 🧠 Database Schema
+
+### 🔸 Tables
+
+| Table | Purpose |
+|:--|:--|
+| `user` | Stores user details (login, password) |
+| `keywords` | Master list of interest categories |
+| `adjectives` | A table with 20 columns (each for a keyword); each row is a different adjective set |
+| `user_favorites` | Blogs saved by users |
+| `blog_generation_log` | NEW: Tracks blogs generated along with selected keywords and adjectives |
+
+---
+
+### 🧬 `blog_generation_log` Schema
+
+```sql
+CREATE TABLE blog_generation_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  generated_title TEXT NOT NULL,
+  generated_description TEXT NOT NULL,
+  selected_data JSON NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
+);
+✅ This logs:
+
+user_id
+
+generated_title and description
+
+selected_data: JSON mapping like:
+
+json
 Copy
 Edit
-
----
-
-## ⚙️ Setup Instructions
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/BlogHive.git
-cd BlogHive
-2. Set up a Virtual Environment
-bash
+{
+  "fitness": ["intense", "cardio"],
+  "technology": ["automated"]
+}
+🗺 Entity Relationship Overview
+scss
 Copy
 Edit
-python3 -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
-3. Install Dependencies
+[user] ────< [user_favorites]
+
+[user] ────< [blog_generation_log] 
+                          ↳ (JSON: keyword → adjectives)
+
+[keywords] 
+      ↳ [adjectives] → stored as columns per keyword
+🧪 How Blog Generation Works
+User selects keywords
+
+For each keyword, they choose one or more adjectives
+
+These are used to create a prompt for OpenAI:
+
+arduino
+Copy
+Edit
+"Based on: adventure, spicy, futuristic..."
+→ Title + Description
+The blog and its metadata are saved in blog_generation_log for tracking
+
+📂 Folder Structure
+markdown
+Copy
+Edit
+📁 static/
+    └── styles.css, script.js
+
+📁 templates/
+    └── login.html, signup.html, index.html, favorites.html
+
+📁 app.py
+📁 .env
+📁 requirements.txt
+📁 README.md
+⚙️ Setup Instructions
+Clone the repo and set up a virtual environment
+
+Install dependencies:
+
 bash
 Copy
 Edit
 pip install -r requirements.txt
-4. Configure Environment Variables
-Create a .env file in the project root:
+Configure .env file with:
 
-dotenv
+ini
 Copy
 Edit
-FLASK_SECRET_KEY=your-very-secret-random-string
+FLASK_SECRET_KEY=your_secret
+OPENAI_API_KEY=your_api_key
 DB_HOST=localhost
 DB_PORT=8889
 DB_USER=root
 DB_PASSWORD=root
 DB_NAME=bloghive
-5. Set Up the Database
-Use the provided bloghive_schema.sql file
+Create all tables (see SQL setup)
 
-Execute it in MySQL Workbench
+Run:
 
-It will create all tables (user, keywords, blog, blog_keywords, user_favorites) and insert sample data.
-
-6. Run the Application
 bash
 Copy
 Edit
-python app.py
-Visit:
+flask run
+✅ Normalization & Joins Used
+All tables satisfy 3NF
 
-arduino
-Copy
-Edit
-http://localhost:5000/
-✅ BlogHive will be live!
+user_favorites, blog_generation_log use foreign keys
 
-📚 Database Design (Normalization)
-Normalization:
+Joins are used in:
 
-1NF: Each table has atomic values (no repeating groups).
+Fetching adjectives (keywords → adjectives)
 
-2NF: All non-key attributes fully depend on primary key.
+Filtering logs by user
 
-3NF: No transitive dependencies.
+Favorites by user
 
-Relations:
+👩‍💻 Contributors
+Heeya Mineshkumar Amin
 
-blog ⬌ keywords via blog_keywords (many-to-many)
-
-user ⬌ user_favorites ⬌ blog
-
-JOINs and Conditional Queries Used:
-
-Blog fetching by selected keywords uses JOINs and WHERE IN conditions.
-
-
-
-Login Page	Keyword Selection	Blog Display
-✨ Future Improvements 
-Add user profile pages
-
-Allow users to favorite blogs
-
-Save customized blogs
-
-Deploy live on Render / Vercel
-
-🧑‍💻 Author
-Heeya Amin
-Data Science and Software Developer
-
-🛡️ License
-This project is licensed under the MIT License.
+Shail Jayesh Patel

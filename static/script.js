@@ -1,5 +1,31 @@
 //// script.js
 // Authors: Heeya Mineshkumar Amin and Shail Jayesh Patel
+// Example function (modify to suit your setup)
+document.getElementById("submit-button").addEventListener("click", function () {
+  const blogContainer = document.getElementById("blogs-container");
+
+  // Optionally clear previous content
+  blogContainer.innerHTML = "";
+
+  // Your logic to fetch/generate blogs, for now simulate one:
+  const blogHTML = `
+    <div class="col-md-4 mb-4 blog-card">
+      <div class="card shadow-sm h-100">
+        <img src="https://via.placeholder.com/400x200" class="card-img-top" alt="Blog Image">
+        <div class="card-body">
+          <h5 class="card-title">Blog Title</h5>
+          <p class="card-text">Blog Description</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  blogContainer.innerHTML += blogHTML;
+
+  // Remove `d-none` and add animation
+  blogContainer.classList.remove("d-none");
+});
+
 
 
 document.addEventListener("DOMContentLoaded", function() {

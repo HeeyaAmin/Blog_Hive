@@ -1,5 +1,8 @@
 # app.py
 # Authors: Heeya Mineshkumar Amin and Shail Jayesh Patel
+import requests
+import uuid
+from pathlib import Path
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
@@ -61,6 +64,34 @@ def fetch_random_adjectives(selected_keywords):
             selected_adjectives.append(random_row[keyword])
 
     return selected_adjectives
+
+# ----------------------------------------
+# Written by Heeya Mineshkumar Amin
+# Helper function to generate images
+# ----------------------------------------
+def generate_and_save_image(prompt_text):
+    try:
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt_text,
+            n=1,
+            size="1024x1024"
+        )
+        image_url = response.data[0].url
+        img_data = requests.get(image_url).content
+
+        # Generate safe filename
+        file_name = f"{uuid.uuid4().hex}.png"
+        image_path = Path("static/images") / file_name
+
+        # Save image to static folder
+        with open(image_path, "wb") as f:
+            f.write(img_data)
+
+        return f"static/images/{file_name}"  # relative path for HTML
+    except Exception as e:
+        print("Image generation error:", e)
+        return "static/images/default.png"
 
 # ----------------------------------------
 # 🔐 User Authentication Routes
@@ -125,6 +156,7 @@ def index():
     keywords = get_keywords()
     return render_template('index.html', keywords=keywords)
 
+
 # Written by Shail Jayesh Patel
 @app.route('/generate_blogs', methods=['POST'])
 def generate_blogs():
@@ -166,6 +198,10 @@ def generate_blogs():
         content = response.choices[0].message.content
         blog_data = json.loads(content)
 
+        # Generate image
+        image_prompt = f"{blog_data['title']} - {blog_data['description'][:100]}"
+        image_url = generate_and_save_image(image_prompt)
+
         # Save blog generation to DB
         cursor.execute(
             "INSERT INTO blog_generation_log (user_id, generated_title, generated_description, selected_data) VALUES (%s, %s, %s, %s)",
@@ -176,7 +212,7 @@ def generate_blogs():
         return jsonify(matched_blogs=[{
             "title": blog_data.get('title', 'Untitled Blog'),
             "description": blog_data.get('description', 'No description available.'),
-            "image_url": "static/images/default.png"
+            "image_url": image_url
         }])
 
     except Exception as e:
@@ -190,6 +226,63 @@ def get_adjectives(keyword):
     cursor.execute(query)
     results = cursor.fetchall()
     return jsonify([row['adjective'] for row in results if row['adjective']])
+
+# Wriiten by Shail Jayesh Patel
+@app.route('/favorite_blog', methods=['POST'])
+def favorite_blog():
+    if 'user_id' not in session:
+        return jsonify({'status': 'unauthorized'})
+
+    data = request.json
+    title = data.get('title')
+    description = data.get('description')
+    image_url = data.get('image_url', 'static/images/default.png')
+
+    try:
+        cursor.execute(
+            "SELECT * FROM user_favorites WHERE user_id=%s AND blog_title=%s",
+            (session['user_id'], title)
+        )
+        if cursor.fetchone():
+            return jsonify({'status': 'already_favorited'})
+
+        cursor.execute(
+            "INSERT INTO user_favorites (user_id, blog_title, blog_description, image_url) VALUES (%s, %s, %s, %s)",
+            (session['user_id'], title, description, image_url)
+        )
+        db.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+# Written by Heeya Mineshkumar Amin
+@app.route('/favorites')
+def favorites():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    cursor.execute(
+        "SELECT blog_title AS title, blog_description AS description, image_url "
+        "FROM user_favorites WHERE user_id = %s",
+        (session['user_id'],)
+    )
+    favorites = cursor.fetchall()
+    return render_template('favorites.html', favorites=favorites)
+
+
+# Written by Shail Jayesh Patel
+@app.route('/remove_favorite', methods=['POST'])
+def remove_favorite():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    title = request.form['title']
+    cursor.execute(
+        "DELETE FROM user_favorites WHERE user_id = %s AND blog_title = %s",
+        (session['user_id'], title)
+    )
+    db.commit()
+    return redirect(url_for('favorites'))
 
 
 # ----------------------------------------
